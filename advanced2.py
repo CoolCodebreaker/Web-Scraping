@@ -58,11 +58,11 @@ try:
     time.sleep(5)
     title = driver.find_element(By.ID, "firstHeading").text #'no such element' error for some reason
     print("TITLE: "+ title)
-    #content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
-    #print("CONTENT: "+ content.text)
-    #with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
-        #fi.write(title.text)
-        #fi.write(content.text)
+    content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
+    print("CONTENT: "+ content.text)
+    with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
+        fi.write(title.text)
+        fi.write(content.text)
 except Exception as e:
     print("ERROR...", e)
 
