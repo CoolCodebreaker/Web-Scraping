@@ -49,27 +49,23 @@ except Exception as e:
 
 time.sleep(5)
 
-#with open ('test1.csv', 'w') as fi:
-    #for i in results:
-       # print(i.text)
-        #fi.write(i.text)
+with open ('test1.csv', 'w') as fi:
+    for i in results:
+       print(i.text)
+       fi.write(i.text)
 
 try:
-    time.sleep(5)
     print(driver.page_source)
-    #title = driver.find_element(By.CLASS_NAME, "mw-page-title-main") #'no such element' error for some reason
-    #print("TITLE: "+ title.text)
-    #content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
-    #print("CONTENT: "+ content.text)
-    #with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
-        #fi.write(title.text)
-        #fi.write(content.text)
+    title = driver.find_element(By.XPATH, "//*[@id='firstHeading']/span") #'no such element' error for some reason
+    print("TITLE: "+ title.text)
+    content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
+    print("CONTENT: "+ content.text)
 except Exception as e:
     print("ERROR...", e)
 
-#with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
-        #fi.write(title.text)
-        #fi.write(content.text)
+with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
+        fi.write(title.text)
+        fi.write(content.text)
 
 time.sleep(3)
 driver.quit()
