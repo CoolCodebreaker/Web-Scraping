@@ -56,16 +56,19 @@ with open ('test1.csv', 'w') as fi:
 
 try:
     print(driver.page_source)
-    title = driver.find_element(By.XPATH, "//*[@id='firstHeading']/span") #'no such element' error for some reason
-    print("TITLE: "+ title.text)
-    content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
-    print("CONTENT: "+ content.text)
+    try:
+        title = driver.find_element(By.XPATH, "//*[@id='firstHeading']/span") #'no such element' error for some reason
+        print("TITLE: "+ title.text)
+    except:
+        title = "failed title"
+    #content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
+    #print("CONTENT: "+ content.text)
 except Exception as e:
     print("ERROR...", e)
 
 with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
-        fi.write(title.text)
-        fi.write(content.text)
+        fi.write(title)
+        #fi.write(content.text)
 
 time.sleep(3)
 driver.quit()
