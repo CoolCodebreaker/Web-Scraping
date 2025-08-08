@@ -2,73 +2,64 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
 driver = webdriver.Chrome()
 
-driver.get("https://www.bing.com")
-
-time.sleep(2)
-
 try:
-    consent_button = driver.find_element(By.CSS_SELECTOR, "#bnp_btn_reject")
-    consent_button.click()
-except:
-    pass
+    driver.get("https://www.bing.com")
 
-search_box = driver.find_element(By.NAME, "q")
-search_box.send_keys("Physics")
-search_box.send_keys(Keys.RETURN)
-
-
-time.sleep(2)
-
-try:
+    # Dismiss Bing consent popup
     try:
-        q_button = driver.find_element(By.CSS_SELECTOR, "#b_vfly_64673 > div > div")
-        q_button.click()
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "bnp_btn_reject"))).click()
     except:
         pass
+
+    # Search for "Physics"
+    search_box = driver.find_element(By.NAME, "q")
+    search_box.send_keys("Physics Wikipedia")
+    search_box.send_keys(Keys.RETURN)
+
+    time.sleep(2)
+
+    # Find first Wikipedia link
+    wiki_link = None
+    links = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")
+    for link in links:
+        href = link.get_attribute("href")
+        if "wikipedia.org" in href:
+            wiki_link = href
+            break
+
+    if not wiki_link:
+        print("No Wikipedia link found.")
+        driver.quit()
+        exit()
+
+    driver.get(wiki_link)
+
+    # Wait for Wikipedia page to load
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "firstHeading"))
+    )
+
+    # Get title and first paragraph
+    title = driver.find_element(By.ID, "firstHeading").text
+
     try:
-        consent_button = driver.find_element(By.CSS_SELECTOR, "#bnp_btn_reject")
-        consent_button.click()
+        paragraph = driver.find_element(By.CSS_SELECTOR, "#mw-content-text p").text
     except:
-        pass
-    results = driver.find_elements(By.CSS_SELECTOR, "#b_results > li.b_algo.b_algoBorder.b_algoBigWiki.b_algo_feedback.b_algoBigWiki2.b_wiki_bg_color_kc > div.b_algo_group > h2 > a")
-    print("ABCDEFGHHIJKLMNOP"+str(results))
-    try:
-        for result in results:
-            href = result.get_attribute("href")
-            if "bing" not in href:
-                result.click()
-                break
-    except:
-        pass
-except Exception as e:
-    print("ERROR...", e)
+        paragraph = "First paragraph not found"
 
-time.sleep(5)
+    print("TITLE:", title)
+    print("PARAGRAPH:", paragraph)
 
-with open ('test1.csv', 'w') as fi:
-    for i in results:
-       print(i.text)
-       fi.write(i.text)
+    # Save to CSV
+    with open('test1.csv', 'w') as f:
+        f.write(f'"{title}","{paragraph}"\n')
 
-try:
-    print(driver.page_source)
-    try:
-        title = driver.find_element(By.XPATH, "//*[@id='firstHeading']/span") #'no such element' error for some reason
-        print("TITLE: "+ title.text)
-    except:
-        title = "failed title"
-    #content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
-    #print("CONTENT: "+ content.text)
-except Exception as e:
-    print("ERROR...", e)
-
-with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
-        fi.write(title)
-        #fi.write(content.text)
-
-time.sleep(3)
-driver.quit()
+finally:
+    time.sleep(2)
+    driver.quit()
