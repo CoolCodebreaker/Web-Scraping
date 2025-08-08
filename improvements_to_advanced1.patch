@@ -1,0 +1,136 @@
+From 4a2f31550951f887feaa65c64c5286503f5c7fc8 Mon Sep 17 00:00:00 2001
+From: Ali Mirza <ali@janusny.com>
+Date: Fri, 8 Aug 2025 11:25:33 -0400
+Subject: [PATCH] Improve advanced1.py with better error handling, explicit
+ waits, and Wikipedia-specific scraping
+
+---
+ advanced1.py | 97 ++++++++++++++++++++++++----------------------------
+ 1 file changed, 44 insertions(+), 53 deletions(-)
+
+diff --git a/advanced1.py b/advanced1.py
+index 92b30b8..a7b4658 100644
+--- a/advanced1.py
++++ b/advanced1.py
+@@ -2,73 +2,64 @@ from selenium import webdriver
+ from selenium.webdriver.common.by import By
+ from selenium.webdriver.common.keys import Keys
+ from selenium.webdriver.chrome.service import Service
++from selenium.webdriver.support.ui import WebDriverWait
++from selenium.webdriver.support import expected_conditions as EC
+ import time
+ 
+ driver = webdriver.Chrome()
+ 
+-driver.get("https://www.bing.com")
++try:
++    driver.get("https://www.bing.com")
+ 
+-time.sleep(2)
++    # Dismiss Bing consent popup
++    try:
++        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "bnp_btn_reject"))).click()
++    except:
++        pass
+ 
+-try:
+-    consent_button = driver.find_element(By.CSS_SELECTOR, "#bnp_btn_reject")
+-    consent_button.click()
+-except:
+-    pass
++    # Search for "Physics"
++    search_box = driver.find_element(By.NAME, "q")
++    search_box.send_keys("Physics Wikipedia")
++    search_box.send_keys(Keys.RETURN)
+ 
+-search_box = driver.find_element(By.NAME, "q")
+-search_box.send_keys("Physics")
+-search_box.send_keys(Keys.RETURN)
++    time.sleep(2)
+ 
++    # Find first Wikipedia link
++    wiki_link = None
++    links = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")
++    for link in links:
++        href = link.get_attribute("href")
++        if "wikipedia.org" in href:
++            wiki_link = href
++            break
+ 
+-time.sleep(2)
++    if not wiki_link:
++        print("No Wikipedia link found.")
++        driver.quit()
++        exit()
+ 
+-try:
+-    try:
+-        q_button = driver.find_element(By.CSS_SELECTOR, "#b_vfly_64673 > div > div")
+-        q_button.click()
+-    except:
+-        pass
+-    try:
+-        consent_button = driver.find_element(By.CSS_SELECTOR, "#bnp_btn_reject")
+-        consent_button.click()
+-    except:
+-        pass
+-    results = driver.find_elements(By.CSS_SELECTOR, "#b_results > li.b_algo.b_algoBorder.b_algoBigWiki.b_algo_feedback.b_algoBigWiki2.b_wiki_bg_color_kc > div.b_algo_group > h2 > a")
+-    print("ABCDEFGHHIJKLMNOP"+str(results))
+-    try:
+-        for result in results:
+-            href = result.get_attribute("href")
+-            if "bing" not in href:
+-                result.click()
+-                break
+-    except:
+-        pass
+-except Exception as e:
+-    print("ERROR...", e)
++    driver.get(wiki_link)
+ 
+-time.sleep(5)
++    # Wait for Wikipedia page to load
++    WebDriverWait(driver, 10).until(
++        EC.presence_of_element_located((By.ID, "firstHeading"))
++    )
+ 
+-with open ('test1.csv', 'w') as fi:
+-    for i in results:
+-       print(i.text)
+-       fi.write(i.text)
++    # Get title and first paragraph
++    title = driver.find_element(By.ID, "firstHeading").text
+ 
+-try:
+-    print(driver.page_source)
+     try:
+-        title = driver.find_element(By.XPATH, "//*[@id='firstHeading']/span") #'no such element' error for some reason
+-        print("TITLE: "+ title.text)
++        paragraph = driver.find_element(By.CSS_SELECTOR, "#mw-content-text p").text
+     except:
+-        title = "failed title"
+-    #content = driver.find_element(By.XPATH, "//*[@id='mw-content-text']/div[1]/p[2]") #'no such element' error for some reason
+-    #print("CONTENT: "+ content.text)
+-except Exception as e:
+-    print("ERROR...", e)
++        paragraph = "First paragraph not found"
++
++    print("TITLE:", title)
++    print("PARAGRAPH:", paragraph)
+ 
+-with open ('test1.csv', 'w') as fi: #this should work once the NoSuchElementError above is fixed
+-        fi.write(title)
+-        #fi.write(content.text)
++    # Save to CSV
++    with open('test1.csv', 'w') as f:
++        f.write(f'"{title}","{paragraph}"\n')
+ 
+-time.sleep(3)
+-driver.quit()
+\ No newline at end of file
++finally:
++    time.sleep(2)
++    driver.quit()
+-- 
+2.47.1
+
